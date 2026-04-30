@@ -1,21 +1,35 @@
 <!doctype html>
 <html>
   <head>
-    <title>Map</title>
-
+    <title>Realtime Location Tracker</title>
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   </head>
   <body>
-    <h2>My Map</h2>
-    <div id="map"></div>
+    <div id="loading-overlay">
+      <div class="spinner"></div>
+      <p>Authenticating...</p>
+    </div>
 
-    <!-- Leaflet JS -->
+    <div id="login-container" style="display: none;">
+      <h1>Location Tracker</h1>
+      <p>Sign in to start sharing your journey</p>
+      <a href="#" class="login-btn">Login with MyOIDC</a>
+    </div>
+
+    <div id="app-container" style="display: none;">
+      <header>
+        <h2>Live Tracker</h2>
+        <div class="user-info">
+          <span id="user-name"></span>
+          <a href="#" class="logout-btn">Logout</a>
+        </div>
+      </header>
+      <div id="map"></div>
+    </div>
+
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
     <script src="/socket.io/socket.io.js"></script>
-
-    <!-- Your JS file (IMPORTANT: after Leaflet + after div) -->
-    <script src="index.js"></script>
+    <script src="index.js" type="module"></script>
   </body>
 </html>
