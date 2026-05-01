@@ -12,7 +12,7 @@ const loginContainer = document.getElementById("login-container");
 const appContainer = document.getElementById("app-container");
 
 function getAuthToken() {
-  return localStorage.getItem("id_token") || localStorage.getItem("access_token");
+  return localStorage.getItem("access_token");
 }
 
 function clearAuthTokens() {
@@ -141,7 +141,18 @@ function getCurrentLocation() {
 }
 
 function initSocket() {
-  socket = io();
+  socket = io({
+    auth: {
+      token: getAuthToken()
+    }
+  });
+
+  socket.on("connect_error", (err) => {
+    if (err.message === "Unauthorized") {
+      console.error("Socket authentication failed");
+      logout();
+    }
+  });
 
   socket.on("error", (err) => {
     if (err.message === "Unauthorized") {

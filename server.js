@@ -97,19 +97,33 @@ async function main() {
     res.sendFile(join(__dirname, "public", "index.html"));
   });
 
-  io.on("connection", (socket) => {
-    socket.on("client:send-location-to-server", async (data) => {
-      console.log(`Received location from client: ${socket.id}`, data);
-      const user = await verifyToken(data.token);
+  io.use(async (socket, next) => {
+    const token = socket.handshake.auth.token || socket.handshake.query.token;
 
+    if (!token) {
+      return next(new Error("Unauthorized"));
+    }
+
+    try {
+      const user = await verifyToken(token);
       if (!user) {
-        socket.emit("error", { message: "Unauthorized" });
-        return;
+        return next(new Error("Unauthorized"));
       }
+      socket.user = user;
+      next();
+    } catch (err) {
+      next(new Error("Unauthorized"));
+    }
+  });
 
-      const userId = user.id || user.sub;
-      socketUserMap.set(socket.id, userId);
+  io.on("connection", (socket) => {
+    const user = socket.user;
+    const userId = user.id || user.sub;
+    socketUserMap.set(socket.id, userId);
 
+    console.log(`User connected: ${userId} (${socket.id})`);
+
+    socket.on("client:send-location-to-server", async (data) => {
       if (
         !data ||
         typeof data.latitude !== "number" ||
@@ -117,7 +131,6 @@ async function main() {
       )
         return;
 
-      // Produce message to Kafka
       try {
         await kafkaProducer.send({
           topic: "location-updates",
@@ -133,7 +146,6 @@ async function main() {
             },
           ],
         });
-        console.log(`Sent location update to Kafka for user: ${userId}`);
       } catch (err) {
         console.error("Failed to send message to Kafka:", err);
       }
@@ -142,6 +154,7 @@ async function main() {
     socket.on("disconnect", () => {
       const userId = socketUserMap.get(socket.id);
       if (userId) {
+        console.log(`User disconnected: ${userId} (${socket.id})`);
         io.emit("user-disconnect", userId);
         socketUserMap.delete(socket.id);
       }
