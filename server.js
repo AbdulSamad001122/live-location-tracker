@@ -31,6 +31,18 @@ async function main() {
     app.use(express.json());
     app.use(express.static(join(__dirname, "public")));
 
+    console.log("Connecting to Kafka Admin...");
+    const admin = kafkaClient.admin();
+    await admin.connect();
+    const topics = await admin.listTopics();
+    if (!topics.includes("location-updates")) {
+      console.log("Creating topic: location-updates...");
+      await admin.createTopics({
+        topics: [{ topic: "location-updates", numPartitions: 1 }],
+      });
+    }
+    await admin.disconnect();
+
     console.log("Connecting to Kafka Producer...");
     const kafkaProducer = kafkaClient.producer();
     await kafkaProducer.connect();
