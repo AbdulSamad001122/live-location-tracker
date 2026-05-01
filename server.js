@@ -7,8 +7,12 @@ import { Server } from "socket.io";
 import dotenv from "dotenv";
 import { verifyToken } from "./middleware/auth.js";
 import { kafkaClient } from "./kafka-client.js";
+import mongoose from "mongoose";
+import { Location } from "./models/Location.js";
 
 dotenv.config();
+
+const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27019/location_tracker";
 
 async function main() {
   const PORT = process.env.PORT || 8000;
@@ -29,6 +33,12 @@ async function main() {
   const kafkaProducer = kafkaClient.producer();
   await kafkaProducer.connect();
 
+  try {
+    await mongoose.connect(MONGO_URI);
+  } catch (err) {
+    console.error("MongoDB connection failed:", err);
+  }
+
   const kafkaConsumer = kafkaClient.consumer({
     groupId: `socket-server-${PORT}`,
   });
@@ -43,6 +53,20 @@ async function main() {
   kafkaConsumer.run({
     eachMessage: async ({ topic, partition, message, heartbeat }) => {
       const data = JSON.parse(message.value.toString());
+      
+      try {
+        const newLocation = new Location({
+          userId: data.id,
+          name: data.name,
+          email: data.email,
+          latitude: data.latitude,
+          longitude: data.longitude,
+        });
+        await newLocation.save();
+      } catch (err) {
+        console.error("Error saving location to DB:", err);
+      }
+
       io.emit("server:send-new-location-to-users", {
         id: data.id,
         name: data.name,
