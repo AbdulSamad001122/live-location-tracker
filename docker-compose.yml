@@ -17,3 +17,14 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_LOG4J_ROOT_LOGLEVEL: WARN
       KAFKA_TOOLS_LOG4J_LOGLEVEL: WARN
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:

@@ -43,7 +43,6 @@ async function main() {
   kafkaConsumer.run({
     eachMessage: async ({ topic, partition, message, heartbeat }) => {
       const data = JSON.parse(message.value.toString());
-      console.log(`KafkaConsumer Data Received`, { data });
       io.emit("server:send-new-location-to-users", {
         id: data.id,
         name: data.name,
@@ -121,8 +120,6 @@ async function main() {
     const userId = user.id || user.sub;
     socketUserMap.set(socket.id, userId);
 
-    console.log(`User connected: ${userId} (${socket.id})`);
-
     socket.on("client:send-location-to-server", async (data) => {
       if (
         !data ||
@@ -140,6 +137,7 @@ async function main() {
               value: JSON.stringify({
                 id: userId,
                 name: user.name || user.email || "Anonymous",
+                email: user.email || "",
                 latitude: data.latitude,
                 longitude: data.longitude,
               }),
@@ -154,7 +152,6 @@ async function main() {
     socket.on("disconnect", () => {
       const userId = socketUserMap.get(socket.id);
       if (userId) {
-        console.log(`User disconnected: ${userId} (${socket.id})`);
         io.emit("user-disconnect", userId);
         socketUserMap.delete(socket.id);
       }

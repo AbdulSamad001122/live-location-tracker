@@ -56,19 +56,28 @@ async function checkAuth() {
   }
 
   const token = getAuthToken();
+  const idToken = localStorage.getItem("id_token");
 
   if (token) {
     try {
-      const response = await fetch(OIDC_CONFIG.userInfoEndpoint, {
+      let response = await fetch(OIDC_CONFIG.userInfoEndpoint, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
+      if (response.status === 401 && idToken && idToken !== token) {
+        response = await fetch(OIDC_CONFIG.userInfoEndpoint, {
+          headers: { Authorization: `Bearer ${idToken}` },
+        });
+        
+        if (response.ok) {
+          localStorage.setItem("access_token", idToken);
+        }
+      }
 
       if (response.ok) {
         userProfile = await response.json();
         isAuthenticated = true;
-        
         document.getElementById("user-name").textContent = `Logged in as: ${userProfile.name || userProfile.email || "User"}`;
-        
         hideLoading();
         showApp();
         return true;
@@ -93,8 +102,7 @@ async function checkAuth() {
 function login() {
   const state = Math.random().toString(36).substring(7);
   localStorage.setItem("oidc_state", state);
-
-  const authUrl = `${OIDC_CONFIG.authorizeEndpoint}?client_id=${OIDC_CONFIG.clientId}&redirect_uri=${encodeURIComponent(OIDC_CONFIG.redirectUri)}&response_type=code&state=${state}`;
+  const authUrl = `${OIDC_CONFIG.authorizeEndpoint}?client_id=${OIDC_CONFIG.clientId}&redirect_uri=${encodeURIComponent(OIDC_CONFIG.redirectUri)}&response_type=code&state=${state}&scope=openid%20profile%20email`;
   window.location.href = authUrl;
 }
 
@@ -149,7 +157,6 @@ function initSocket() {
 
   socket.on("connect_error", (err) => {
     if (err.message === "Unauthorized") {
-      console.error("Socket authentication failed");
       logout();
     }
   });
@@ -162,9 +169,7 @@ function initSocket() {
 
   socket.on("server:send-new-location-to-users", (data) => {
     const { id, name, latitude, longitude } = data;
-
     if (typeof latitude !== "number" || typeof longitude !== "number") return;
-
     const myId = userProfile.id || userProfile.sub;
     if (id === myId) return;
 
@@ -187,22 +192,20 @@ function initSocket() {
 
   setInterval(async () => {
     if (!socket.connected) return;
-    
     try {
       const position = await getCurrentLocation();
-
       const payload = {
         latitude: position.latitude,
         longitude: position.longitude,
         token: getAuthToken()
       };
-
       socket.emit("client:send-location-to-server", payload);
-
       if (myMarker) {
         myMarker.setLatLng([payload.latitude, payload.longitude]);
+        if (myMarker._icon) {
+          myMarker._icon.classList.add("my-location-marker");
+        }
       }
-
       map.panTo([payload.latitude, payload.longitude]);
     } catch (err) {
       console.error(err);
@@ -228,14 +231,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   const authenticated = await checkAuth();
-  
   if (!authenticated) return;
 
   try {
     const position = await getCurrentLocation();
-
     map = L.map("map").setView([position.latitude, position.longitude], 13);
-
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap contributors",
     }).addTo(map);
