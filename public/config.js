@@ -7,8 +7,8 @@
 
 
 export const OIDC_CONFIG = {
-  clientId: "YOUR_CLIENT_ID",
-  redirectUri: "https://your-app-name.onrender.com/",
+  clientId: "f797cf821cf171a3e42d5c37e6b5bee1",
+  redirectUri: "https://live-location-tracker-0y40.onrender.com/",
   authorizeEndpoint: "https://my-oidc.vercel.app/o/authorize",
   userInfoEndpoint: "https://my-oidc.vercel.app/o/userinfo",
 };
