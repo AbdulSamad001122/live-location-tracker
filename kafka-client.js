@@ -9,9 +9,11 @@ const kafkaConfig = {
 };
 
 if (process.env.KAFKA_USERNAME && process.env.KAFKA_PASSWORD) {
-  kafkaConfig.ssl = true;
+  kafkaConfig.ssl = {
+    rejectUnauthorized: false 
+  };
   kafkaConfig.sasl = {
-    mechanism: "scram-sha-256",
+    mechanism: process.env.KAFKA_MECHANISM || "scram-sha-256",
     username: process.env.KAFKA_USERNAME,
     password: process.env.KAFKA_PASSWORD,
   };
