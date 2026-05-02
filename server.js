@@ -71,7 +71,7 @@ async function main() {
     kafkaConsumer.run({
       eachMessage: async ({ topic, partition, message, heartbeat }) => {
         const data = JSON.parse(message.value.toString());
-        
+
         try {
           const newLocation = new Location({
             userId: data.id,
@@ -131,7 +131,7 @@ async function main() {
     });
 
     app.get("/health", (req, res) => {
-      res.send("Server is healthy!");
+      res.sendStatus(200);
     });
 
     app.get("/", (req, res) => {
