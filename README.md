@@ -1,3 +1,6 @@
+# video Demo
+https://youtube.com/shorts/AWhOl2SVzQI
+
 # Realtime Location Tracker
 
 A high-performance location tracking system that broadcasts user movements in real time. This project combines the power of WebSockets for low-latency communication, Apache Kafka for reliable event streaming, and MongoDB for persistent historical data storage. It is fully secured using the OpenID Connect (OIDC) protocol to ensure that only authenticated users can share or view location data.
