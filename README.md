@@ -2,6 +2,14 @@
 
 A high-performance location tracking system that broadcasts user movements in real time. This project combines the power of WebSockets for low-latency communication, Apache Kafka for reliable event streaming, and MongoDB for persistent historical data storage. It is fully secured using the OpenID Connect (OIDC) protocol to ensure that only authenticated users can share or view location data.
 
+## Key Features
+
+*   **Real-time Tracking**: Broadcasts location updates to all connected users instantly.
+*   **5-Second Refresh**: Automatically updates and sends the user's current coordinates every 5 seconds.
+*   **Interactive Map**: Uses Leaflet.js to render markers for all active users.
+*   **Secure Auth**: Integrated with OIDC for authenticated-only access.
+*   **Scalable Ingestion**: Uses Apache Kafka to decouple tracking from storage.
+
 ## Tech Stack
 
 The architecture is built on a modern JavaScript stack designed for scale and reliability:
@@ -86,7 +94,7 @@ The application uses the **Authorization Code Flow** for security:
 
 Communication between the client and server happens through specific events:
 
-*   **`client:send-location-to-server`**: The client emits this event whenever the browser's Geolocation API detects a position change. It sends `{ latitude, longitude }`.
+*   **`client:send-location-to-server`**: The client emits this event every 5 seconds using the browser's Geolocation API. It sends `{ latitude, longitude }`.
 *   **`server:send-new-location-to-users`**: The server broadcasts this event to all connected clients after a location update has been successfully processed through Kafka. It contains the user's ID, name, and coordinates.
 *   **`user-disconnect`**: When a user leaves, the server broadcasts their ID so the frontend can remove their marker from the map.
 

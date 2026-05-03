@@ -210,7 +210,7 @@ function initSocket() {
     } catch (err) {
       console.error(err);
     }
-  }, 10000);
+  }, 5000);
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
